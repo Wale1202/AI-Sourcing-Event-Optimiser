@@ -150,3 +150,37 @@ class OptimisationResponse(BaseModel):
     average_risk: float = 0.0
     explanation: str = ""
     warnings: list[str] = Field(default_factory=list)
+
+
+# ---------- Sourcing Brief Assistant (POST /briefs/parse) ----------
+
+
+class BriefParseRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=5000)
+
+
+class ExtractedField(BaseModel):
+    """One field extracted from a free-text brief, with a brief audit trail."""
+
+    value: int | float | str
+    confidence: str  # "high" | "medium" | "low"
+    matched_text: str  # the snippet from the original brief that triggered the match
+
+
+class BriefParseResponse(BaseModel):
+    """Result of parsing a free-text sourcing brief.
+
+    Each extracted field is optional — the buyer's brief may simply not mention
+    it. ``missing_fields`` lists fields the buyer still has to confirm before
+    creating a sourcing event.
+    """
+
+    original_text: str
+    category: ExtractedField | None = None
+    total_demand: ExtractedField | None = None
+    max_suppliers: ExtractedField | None = None
+    min_quality_score: ExtractedField | None = None
+    risk_preference: ExtractedField | None = None
+    cost_priority: ExtractedField | None = None
+    confidence_notes: list[str] = Field(default_factory=list)
+    missing_fields: list[str] = Field(default_factory=list)

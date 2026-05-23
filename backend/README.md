@@ -84,8 +84,30 @@ All endpoints are under `/api/v1`.
 | PATCH  | /bids/{id} | Update bid (price/capacity/lead time/quality) |
 | DELETE | /bids/{id} | Delete bid |
 | POST   | /events/{id}/optimise | Run OR-Tools CP-SAT solver, persist + return the recommended award |
+| POST   | /briefs/parse | Sourcing Brief Assistant — turn natural-language brief into draft event fields |
 
 The full schema lives at `/openapi.json` and renders in Swagger at `/docs`.
+
+## Sourcing Brief Assistant
+
+`POST /api/v1/briefs/parse` accepts `{ "text": "..." }` and returns a draft set
+of sourcing-event fields extracted from a buyer's plain-English brief
+(category, total demand, max suppliers, min quality score, risk preference,
+cost priority).
+
+**This is an AI-assistant-style workflow prototype, not a fully autonomous AI
+agent.** The assistant *never* creates a sourcing event, edits records, or
+runs the optimiser on its own. Its only job is to translate free text into a
+structured *draft* — every extracted field is returned with the snippet of
+text it was matched against, and fields it could not extract are listed in
+`missing_fields`. The buyer must review, correct, and confirm before any
+sourcing event is created and before any optimisation is run.
+
+The current implementation in `app/services/brief_parser.py` is deterministic
+and dependency-free (regex + keyword matching) — easy to test and free to run.
+The module is built behind a `BriefParser` Protocol, so an LLM-backed adapter
+(`LlmBriefParser`) can be added later without changing the route, the
+response shape, or the tests.
 
 ## Optimisation engine
 

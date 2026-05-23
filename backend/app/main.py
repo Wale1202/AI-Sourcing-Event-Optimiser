@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.database import init_db
-from app.routes import bids, events, health, optimisation, suppliers
+from app.routes import bids, briefs, events, health, optimisation, suppliers
 from app.seed import seed_if_empty
 
 
@@ -36,6 +36,7 @@ def create_app(*, use_lifespan: bool = True) -> FastAPI:
     app.include_router(suppliers.router)
     app.include_router(bids.router)
     app.include_router(optimisation.router)
+    app.include_router(briefs.router)
     return app
 
 
