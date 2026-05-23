@@ -118,3 +118,35 @@ class OptimisationResultRead(BaseModel):
     average_risk: float
     explanation: str
     created_at: datetime
+
+
+# ---------- Optimisation run (POST /events/{id}/optimise) ----------
+
+
+class SupplierAllocation(BaseModel):
+    """One line of the recommended award."""
+
+    supplier_id: int
+    supplier_name: str
+    awarded_quantity: int
+    unit_price: float
+    total_cost: float  # awarded_quantity * unit_price
+
+
+class OptimisationResponse(BaseModel):
+    """Full response payload for an optimisation run.
+
+    ``status`` is ``"optimal"`` when the solver found an allocation,
+    ``"infeasible"`` when the constraints cannot be satisfied. On infeasible
+    runs ``allocations`` is empty and ``warnings`` explains why.
+    """
+
+    status: str
+    event_id: int
+    result_id: int | None = None
+    allocations: list[SupplierAllocation] = Field(default_factory=list)
+    total_cost: float = 0.0
+    average_quality: float = 0.0
+    average_risk: float = 0.0
+    explanation: str = ""
+    warnings: list[str] = Field(default_factory=list)

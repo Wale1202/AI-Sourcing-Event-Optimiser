@@ -83,5 +83,24 @@ All endpoints are under `/api/v1`.
 | GET    | /bids/{id} | Get bid |
 | PATCH  | /bids/{id} | Update bid (price/capacity/lead time/quality) |
 | DELETE | /bids/{id} | Delete bid |
+| POST   | /events/{id}/optimise | Run OR-Tools CP-SAT solver, persist + return the recommended award |
 
 The full schema lives at `/openapi.json` and renders in Swagger at `/docs`.
+
+## Optimisation engine
+
+`app/services/optimisation_service.py` builds an OR-Tools **CP-SAT** model that
+chooses how many units to award to each bid so that total cost is minimised
+subject to:
+
+1. Σ awarded quantity = event total demand
+2. 0 ≤ awarded quantity ≤ bid capacity
+3. The number of selected suppliers is ≤ `max_suppliers`
+4. Bids whose quality score is below `min_quality_score` are dropped up-front
+5. Quantity-weighted average risk ≤ `max_average_risk`
+
+Prices are scaled to integer cents and risk scores to per-mille so the whole
+model stays inside CP-SAT's integer domain. Before invoking the solver, the
+service runs cheap pre-checks (no bids, capacity shortfall, top-K capacity
+shortfall, lowest-possible average risk above the ceiling) so the API can
+return a *specific* warning rather than a bare "infeasible".
