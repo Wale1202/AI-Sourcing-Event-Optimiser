@@ -32,7 +32,6 @@ from typing import Protocol
 
 from app.schemas import BriefParseResponse, ExtractedField
 
-
 # ---------- public protocol ----------
 
 

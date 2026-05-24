@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-
 EVENT_PAYLOAD = {
     "name": "Q3 Laptops",
     "category": "IT Hardware",

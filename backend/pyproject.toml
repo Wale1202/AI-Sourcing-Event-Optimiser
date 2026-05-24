@@ -9,4 +9,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
-ignore = ["E501"]
+ignore = [
+    "E501",  # line too long — black/ruff format handles wrapping where it matters
+    "B008",  # function call in default arg — required for FastAPI's Depends() / Body()
+]

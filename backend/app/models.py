@@ -8,21 +8,21 @@ because SQLModel/SQLAlchemy needs to introspect the relationship annotations
 at runtime to wire up the mapping.
 """
 
-from datetime import datetime, timezone
-from typing import Any, List, Optional
-
-
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+from datetime import UTC, datetime
+from typing import Any, Optional
 
 from sqlalchemy import JSON, Column, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
+def _utcnow() -> datetime:
+    return datetime.now(UTC)
+
+
 class SourcingEvent(SQLModel, table=True):
     __tablename__ = "sourcing_events"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str
     category: str
     total_demand: int
@@ -31,11 +31,11 @@ class SourcingEvent(SQLModel, table=True):
     max_average_risk: float
     created_at: datetime = Field(default_factory=_utcnow)
 
-    bids: List["Bid"] = Relationship(
+    bids: list["Bid"] = Relationship(
         back_populates="event",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    results: List["OptimisationResult"] = Relationship(
+    results: list["OptimisationResult"] = Relationship(
         back_populates="event",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -44,13 +44,13 @@ class SourcingEvent(SQLModel, table=True):
 class Supplier(SQLModel, table=True):
     __tablename__ = "suppliers"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str
     country: str
     risk_score: float
     sustainability_score: float
 
-    bids: List["Bid"] = Relationship(
+    bids: list["Bid"] = Relationship(
         back_populates="supplier",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
@@ -63,7 +63,7 @@ class Bid(SQLModel, table=True):
         UniqueConstraint("event_id", "supplier_id", name="uq_bid_event_supplier"),
     )
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     event_id: int = Field(foreign_key="sourcing_events.id")
     supplier_id: int = Field(foreign_key="suppliers.id")
     unit_price: float
@@ -86,9 +86,9 @@ class OptimisationResult(SQLModel, table=True):
 
     __tablename__ = "optimisation_results"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     event_id: int = Field(foreign_key="sourcing_events.id")
-    label: Optional[str] = Field(default=None, max_length=120)
+    label: str | None = Field(default=None, max_length=120)
     status: str = "optimal"  # "optimal" | "infeasible"
 
     total_cost: float = 0.0
@@ -100,16 +100,16 @@ class OptimisationResult(SQLModel, table=True):
     explanation: str = ""  # human-readable fallback text
 
     # JSON snapshots so each run is fully reproducible from its row alone.
-    constraints_used: Optional[dict[str, Any]] = Field(
+    constraints_used: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSON)
     )
-    allocations_snapshot: Optional[list[dict[str, Any]]] = Field(
+    allocations_snapshot: list[dict[str, Any]] | None = Field(
         default=None, sa_column=Column(JSON)
     )
-    structured_explanation: Optional[dict[str, Any]] = Field(
+    structured_explanation: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSON)
     )
-    warnings_snapshot: Optional[list[str]] = Field(
+    warnings_snapshot: list[str] | None = Field(
         default=None, sa_column=Column(JSON)
     )
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-
 VALID_EVENT = {
     "name": "Q4 Office Chairs",
     "category": "Furniture",

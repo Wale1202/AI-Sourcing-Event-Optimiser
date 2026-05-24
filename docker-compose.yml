@@ -1,0 +1,54 @@
+# Local-dev stack: Postgres + backend (FastAPI) + frontend (nginx-served Vite build).
+#
+#   docker compose up --build
+#
+# After the stack is up:
+#   - Frontend: http://localhost:5173
+#   - Backend API: http://localhost:8000  (Swagger at /docs)
+#   - Postgres: localhost:5432  (user/pass/db = sourcing/sourcing/sourcing)
+#
+# Stop + remove volumes:
+#   docker compose down -v   # nukes the database too
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sourcing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sourcing}
+      POSTGRES_DB: ${POSTGRES_DB:-sourcing}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sourcing} -d ${POSTGRES_DB:-sourcing}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-sourcing}:${POSTGRES_PASSWORD:-sourcing}@db:5432/${POSTGRES_DB:-sourcing}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Browser-side base URL — must be reachable from the *host*, not the
+        # docker network, because JS runs in the user's browser.
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:

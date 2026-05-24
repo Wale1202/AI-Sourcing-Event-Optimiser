@@ -4,3 +4,4 @@ sqlmodel==0.0.22
 pydantic==2.9.2
 pydantic-settings==2.5.2
 ortools==9.14.6206
+psycopg[binary]==3.2.3
