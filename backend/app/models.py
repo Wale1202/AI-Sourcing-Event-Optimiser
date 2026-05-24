@@ -9,13 +9,13 @@ at runtime to wire up the mapping.
 """
 
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import JSON, Column, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -76,14 +76,43 @@ class Bid(SQLModel, table=True):
 
 
 class OptimisationResult(SQLModel, table=True):
+    """One persisted optimisation *scenario* run.
+
+    Stores both the aggregate metrics and a JSON snapshot of the allocations,
+    the constraints used (possibly overridden from the event defaults), and
+    the structured explanation — so scenarios are independently reproducible
+    and the comparison table never needs to re-solve.
+    """
+
     __tablename__ = "optimisation_results"
 
     id: Optional[int] = Field(default=None, primary_key=True)
     event_id: int = Field(foreign_key="sourcing_events.id")
-    total_cost: float
-    average_quality: float
-    average_risk: float
-    explanation: str
+    label: Optional[str] = Field(default=None, max_length=120)
+    status: str = "optimal"  # "optimal" | "infeasible"
+
+    total_cost: float = 0.0
+    average_quality: float = 0.0
+    average_risk: float = 0.0
+    average_sustainability: float = 0.0
+    suppliers_selected: int = 0
+
+    explanation: str = ""  # human-readable fallback text
+
+    # JSON snapshots so each run is fully reproducible from its row alone.
+    constraints_used: Optional[dict[str, Any]] = Field(
+        default=None, sa_column=Column(JSON)
+    )
+    allocations_snapshot: Optional[list[dict[str, Any]]] = Field(
+        default=None, sa_column=Column(JSON)
+    )
+    structured_explanation: Optional[dict[str, Any]] = Field(
+        default=None, sa_column=Column(JSON)
+    )
+    warnings_snapshot: Optional[list[str]] = Field(
+        default=None, sa_column=Column(JSON)
+    )
+
     created_at: datetime = Field(default_factory=_utcnow)
 
     event: Optional["SourcingEvent"] = Relationship(back_populates="results")

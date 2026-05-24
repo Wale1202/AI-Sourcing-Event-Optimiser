@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import init_db
-from app.routes import bids, briefs, events, health, optimisation, suppliers
+from app.routes import bids, briefs, events, health, optimisation, runs, suppliers
 from app.seed import seed_if_empty
 
 
@@ -49,6 +49,7 @@ def create_app(*, use_lifespan: bool = True) -> FastAPI:
     app.include_router(bids.router)
     app.include_router(optimisation.router)
     app.include_router(briefs.router)
+    app.include_router(runs.router)
     return app
 
 

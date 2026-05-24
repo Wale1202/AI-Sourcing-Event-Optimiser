@@ -34,6 +34,12 @@ On first start, the app creates `sourcing.db` (SQLite) and seeds one sample even
 ("Laptop Procurement Q3") with five suppliers and five bids. Subsequent starts skip
 seeding if data already exists. Delete `sourcing.db` to reset.
 
+> **Schema changes during dev**: SQLModel's `create_all()` adds new tables but
+> does not alter existing ones. If you pull a change that adds columns
+> (e.g. the `OptimisationResult` extensions added in the explainability
+> milestone), delete `sourcing.db` so the seeder rebuilds it from scratch.
+> No Alembic migrations until we go multi-tenant.
+
 ## Run the tests
 
 ```bash
@@ -83,7 +89,10 @@ All endpoints are under `/api/v1`.
 | GET    | /bids/{id} | Get bid |
 | PATCH  | /bids/{id} | Update bid (price/capacity/lead time/quality) |
 | DELETE | /bids/{id} | Delete bid |
-| POST   | /events/{id}/optimise | Run OR-Tools CP-SAT solver, persist + return the recommended award |
+| POST   | /events/{id}/optimise | Run solver (optional body: `{label?, overrides?}`), persist + return award + structured explanation |
+| GET    | /events/{id}/runs | List saved scenarios for an event (powers the comparison table) |
+| GET    | /runs/{run_id} | Full detail for a saved scenario (allocations + structured explanation) |
+| DELETE | /runs/{run_id} | Delete a saved scenario |
 | POST   | /briefs/parse | Sourcing Brief Assistant — turn natural-language brief into draft event fields |
 
 The full schema lives at `/openapi.json` and renders in Swagger at `/docs`.
